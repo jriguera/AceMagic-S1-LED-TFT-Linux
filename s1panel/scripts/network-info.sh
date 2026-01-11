@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-# Network interface information script
+#
+# s1panel - Network interface information script
+# Copyright (c) 2026 Jose Riguera
+# GPL-3 Licensed
+#
 # Usage: network-info.sh [prefix]
 # Output: CSV with interface details (mac, ipv4, netmask, gateway, state)
 # If no argument is provided, shows all interfaces

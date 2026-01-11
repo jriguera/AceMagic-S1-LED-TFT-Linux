@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+#
+# s1panel - Filesystem usage script
+# Copyright (c) 2026 Jose Riguera
+# GPL-3 Licensed
+#
 # Script to query filesystem usage and output CSV format
 # Uses lsblk to get block device info with mount points
 # Columns: name,size,use_pct,use_pct_num,mountpoint,icon

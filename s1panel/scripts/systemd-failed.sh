@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+#
+# s1panel - Systemd failed services script
+# Copyright (c) 2026 Jose Riguera
+# GPL-3 Licensed
+#
 # Script to query failed systemd services and output CSV format
 # Columns: service,code,message,failed_at
 

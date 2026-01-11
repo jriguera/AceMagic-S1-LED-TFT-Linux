@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+#
+# s1panel - Top processes by CPU usage
+# Copyright (c) 2026 Jose Riguera
+# GPL-3 Licensed
+#
 # top-procs.sh - Returns top 10 processes by CPU usage
 # Output format: CSV with semicolon separator
 # 

@@ -1,17 +1,22 @@
 #!/usr/bin/env bash
-# Load average history tracker
+#
+# s1panel - Load average history tracker
+# Copyright (c) 2026 Jose Riguera
+# GPL-3 Licensed
+#
 # Keeps 16 samples of 5-minute load average (80 minutes total)
 # Each sample represents a 5-minute window
 # Output format: CSV with header for current values + comma-separated history for bar_chart
 
 # Use XDG_RUNTIME_DIR if available, otherwise /tmp
-RUNTIME_DIR="/run"
-DB_FILE="${RUNTIME_DIR}/s1panel_load_history.dat"
-LOCK_FILE="${RUNTIME_DIR}/s1panel_load_history.lock"
+RUNTIME_DIR="/run/s1panel"
+DB_FILE="${RUNTIME_DIR}/load_history.dat"
+LOCK_FILE="${RUNTIME_DIR}/load_history.lock"
 MAX_SAMPLES=16
 UPDATE_INTERVAL=300  # 5 minutes in seconds
 
 # Create lock to prevent concurrent updates
+mkdir -p "$RUNTIME_DIR"
 exec 200>"$LOCK_FILE"
 flock -n 200 || {
     # Another instance is running, just output current data if available
