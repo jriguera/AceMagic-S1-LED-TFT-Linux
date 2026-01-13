@@ -20,20 +20,23 @@ mkdir -p "$RUNTIME_DIR"
 exec 200>"$LOCK_FILE"
 flock -n 200 || {
     # Another instance is running, just output current data if available
-    if [[ -f "$DB_FILE" ]]; then
-        source "$DB_FILE"
+    if [[ -f "$DB_FILE" ]]
+    then
+        source "$DB_FILE" 2>/dev/null || exit 1
         read LOAD1 LOAD5 LOAD15 _ _ < /proc/loadavg
         echo "load1;load5;load15;history"
-        printf "%.2f;%.2f;%.2f;%s\n" "$LOAD1" "$LOAD5" "$LOAD15" "$HISTORY_LOAD5"
+        printf "%.2f;%.2f;%.2f;%s\n" "$LOAD1" "$LOAD5" "$LOAD15" "${HISTORY_LOAD5:-}"
     fi
     exit 0
 }
 
 # Initialize DB if it doesn't exist
-if [[ ! -f "$DB_FILE" ]]; then
+if [[ ! -f "$DB_FILE" ]]
+then
     # Create initial data file with zeros
     ZEROS=""
-    for ((i=0; i<MAX_SAMPLES; i++)); do
+    for ((i=0; i<MAX_SAMPLES; i++))
+    do
         [[ -n "$ZEROS" ]] && ZEROS+=","
         ZEROS+="0"
     done
@@ -43,10 +46,17 @@ EOF
 fi
 
 # Source current data (for history)
-source "$DB_FILE"
+source "$DB_FILE" 2>/dev/null || {
+    echo "Error: Failed to source $DB_FILE" >&2
+    exit 1
+}
 
 # Always read current load averages from /proc/loadavg
-read LOAD1 LOAD5 LOAD15 _ _ < /proc/loadavg
+if ! read LOAD1 LOAD5 LOAD15 _ _ < /proc/loadavg 2>/dev/null
+then
+    echo "Error: Failed to read /proc/loadavg" >&2
+    exit 1
+fi
 CURRENT_LOAD1=$(printf "%.2f" "$LOAD1")
 CURRENT_LOAD5=$(printf "%.2f" "$LOAD5")
 CURRENT_LOAD15=$(printf "%.2f" "$LOAD15")
@@ -56,21 +66,26 @@ CURRENT_TIME=$(date +%s)
 LAST_MOD=$(stat -c %Y "$DB_FILE" 2>/dev/null || echo 0)
 TIME_DIFF=$((CURRENT_TIME - LAST_MOD))
 
-if [[ $TIME_DIFF -ge $UPDATE_INTERVAL ]]; then
+if [[ $TIME_DIFF -ge $UPDATE_INTERVAL ]]
+then
     # Parse existing history into array
-    IFS=',' read -ra HISTORY_ARRAY <<< "$HISTORY_LOAD5"
-    
+    IFS=',' read -ra HISTORY_ARRAY <<< "${HISTORY_LOAD5:-}"
+    # Ensure we have exactly MAX_SAMPLES elements
+    while [[ ${#HISTORY_ARRAY[@]} -lt $MAX_SAMPLES ]]
+    do
+        HISTORY_ARRAY=("0" "${HISTORY_ARRAY[@]}")
+    done
     # Shift array: remove first element (oldest), add new one at the end (newest)
     # This keeps oldest on the left, newest on the right (matching cpu_usage flow)
     NEW_HISTORY=""
-    for ((i=1; i<${#HISTORY_ARRAY[@]}; i++)); do
+    for ((i=1; i<${#HISTORY_ARRAY[@]}; i++))
+    do
         [[ -n "$NEW_HISTORY" ]] && NEW_HISTORY+=","
         NEW_HISTORY+="${HISTORY_ARRAY[$i]}"
     done
     [[ -n "$NEW_HISTORY" ]] && NEW_HISTORY+=","
     NEW_HISTORY+="$CURRENT_LOAD5"
     HISTORY_LOAD5="$NEW_HISTORY"
-    
     # Save updated history
     cat > "$DB_FILE" << EOF
 HISTORY_LOAD5="$HISTORY_LOAD5"
