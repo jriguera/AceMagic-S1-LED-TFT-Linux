@@ -83,12 +83,20 @@ function execute_command(command, timeout) {
                     logger.error(error.message + ' (exit ' + (error.code || 'unknown') + '): ' + stderr.trim());
                     _fault = true;
                 }
+                logger.debug('exec: command failed with error: ' + error.message);
+                logger.debug('exec: exit code: ' + (error.code || 'unknown'));
+                logger.debug('exec: stderr: ' + (stderr || '(empty)').trim());
+                logger.debug('exec: stdout: ' + (stdout || '(empty)').substring(0, 500));
                 // Capture return code from error object (error.code holds the exit code)
                 const _exit_code = error.code !== undefined ? error.code : -1;
                 fulfill({ success: false, exit_code: _exit_code, stdout: stdout || '', stderr: stderr || error.message });
                 return;
             }
             _fault = false;
+            logger.debug('exec: command succeeded');
+            if (stderr && stderr.trim()) {
+                logger.debug('exec: stderr (non-fatal): ' + stderr.trim());
+            }
             fulfill({ success: true, exit_code: 0, stdout: stdout, stderr: stderr });
         });
     });
